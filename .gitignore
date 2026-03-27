@@ -1,0 +1,13 @@
+.gradle/
+build/
+*.apk
+*.aab
+local.properties
+gradle.properties
+credentials.properties
+
+# Firebase/Auth config - DO NOT commit
+google-services.json
+
+# Credentials - DO NOT commit these files
+credentials.properties.sample
