@@ -25,6 +25,7 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
+          cache: 'none'
 
       - name: Clean Gradle caches
         run: |
@@ -35,8 +36,11 @@ jobs:
 
       - name: Build Debug APK
         run: |
+          # Use fresh Gradle user home to avoid stale state
+          export GRADLE_USER_HOME="$HOME/.gradle-user-home"
+          mkdir -p "$GRADLE_USER_HOME"
           chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon --no-build-cache --no-parallel --no-configuration-cache
+          ./gradlew assembleDebug --no-daemon --no-build-cache --no-parallel --no-configuration-cache --refresh-dependencies
         env:
           AUTH0_CLIENT_ID: ${{ secrets.AUTH0_CLIENT_ID }}
           AUTH0_DOMAIN: ${{ secrets.AUTH0_DOMAIN }}
