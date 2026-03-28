@@ -35,8 +35,11 @@ jobs:
 
       - name: Build Debug APK
         run: |
+          # Unset any stale javaagent environment variables
+          unset GRADLE_OPTS
+          unset JAVA_TOOL_OPTIONS
           chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon --no-build-cache --no-parallel --no-configuration-cache -Dorg.gradle.daemon=false -Dorg.gradle.jvmargs="-Xmx2048m"
+          ./gradlew assembleDebug --no-daemon --no-build-cache --no-parallel --no-configuration-cache -Dorg.gradle.daemon=false -Dorg.gradle.jvmargs="-Xmx2048m -XX:+DisableAttachMechanism"
         env:
           AUTH0_CLIENT_ID: ${{ secrets.AUTH0_CLIENT_ID }}
           AUTH0_DOMAIN: ${{ secrets.AUTH0_DOMAIN }}
