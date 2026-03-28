@@ -26,11 +26,15 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
           cache: 'gradle'
+          cache-dependency-path: app/build.gradle.kts
 
       - name: Build Debug APK
         run: |
           chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon --no-build-cache
+          # Clear any stale Gradle cache to fix instrumentation agent error
+          rm -rf ~/.gradle/caches/transforms-*
+          rm -rf ~/.gradle/daemon
+          ./gradlew assembleDebug --no-daemon --no-build-cache --no-parallel -Dorg.gradle.daemon=false
         env:
           AUTH0_CLIENT_ID: ${{ secrets.AUTH0_CLIENT_ID }}
           AUTH0_DOMAIN: ${{ secrets.AUTH0_DOMAIN }}
