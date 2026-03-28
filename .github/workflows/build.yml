@@ -39,6 +39,16 @@ jobs:
           # Use fresh Gradle user home to avoid stale state
           export GRADLE_USER_HOME="$HOME/.gradle-user-home"
           mkdir -p "$GRADLE_USER_HOME"
+          
+          # Write gradle.properties if it doesn't exist (for CI environments)
+          if [ ! -f gradle.properties ]; then
+            cat > gradle.properties << 'EOF'
+android.useAndroidX=true
+android.enableJetifier=true
+org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8
+EOF
+          fi
+          
           chmod +x gradlew
           ./gradlew assembleDebug --no-daemon --no-build-cache --no-parallel --no-configuration-cache
         env:
