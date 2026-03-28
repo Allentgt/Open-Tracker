@@ -38,6 +38,7 @@ jobs:
         run: |
           echo "android.useAndroidX=true" >> gradle.properties
           echo "android.enableJetifier=true" >> gradle.properties
+          echo "org.gradle.jvmargs=-Xmx4g -XX:+HeapDumpOnOutOfMemoryError" >> gradle.properties
 
       - name: Build Debug APK
         run: |
@@ -46,7 +47,7 @@ jobs:
           mkdir -p "$GRADLE_USER_HOME"
           
           chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon --no-build-cache --no-parallel --no-configuration-cache
+          ./gradlew assembleDebug --no-build-cache --no-parallel --no-configuration-cache
         env:
           AUTH0_CLIENT_ID: ${{ secrets.AUTH0_CLIENT_ID }}
           AUTH0_DOMAIN: ${{ secrets.AUTH0_DOMAIN }}
