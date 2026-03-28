@@ -25,16 +25,18 @@ jobs:
         with:
           java-version: '17'
           distribution: 'temurin'
-          cache: 'gradle'
-          cache-dependency-path: app/build.gradle.kts
+
+      - name: Clean Gradle caches
+        run: |
+          # Completely clean Gradle user home to fix corrupted instrumentation agent
+          rm -rf ~/.gradle/caches/
+          rm -rf ~/.gradle/daemon/
+          rm -rf ~/.gradle/wrapper/
 
       - name: Build Debug APK
         run: |
           chmod +x gradlew
-          # Clear any stale Gradle cache to fix instrumentation agent error
-          rm -rf ~/.gradle/caches/transforms-*
-          rm -rf ~/.gradle/daemon
-          ./gradlew assembleDebug --no-daemon --no-build-cache --no-parallel -Dorg.gradle.daemon=false
+          ./gradlew assembleDebug --no-daemon --no-build-cache --no-parallel --no-configuration-cache -Dorg.gradle.daemon=false -Dorg.gradle.jvmargs="-Xmx2048m"
         env:
           AUTH0_CLIENT_ID: ${{ secrets.AUTH0_CLIENT_ID }}
           AUTH0_DOMAIN: ${{ secrets.AUTH0_DOMAIN }}
