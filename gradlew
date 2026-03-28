@@ -51,14 +51,14 @@
 #       and GRADLE_OPTS) rely on word-splitting, this is performed explicitly;
 #       see the in-line comments for details.
 #
-#       There are tweaks for specific operating systems such as AIX, CygWin,
-#       Darwin, MinGW, and NonStop.
+#   There are tweaks for specific operating systems such as AIX, CygWin,
+#   Darwin, MinGW, and NonStop.
 #
-#   (3) This script is generated from the Groovy template
-#       https://github.com/gradle/gradle/blob/HEAD/subprojects/plugins/src/main/resources/org/gradle/api/internal/plugins/unixStartScript.txt
-#       within the Gradle project.
+#   This script is generated from the Groovy template
+#   https://github.com/gradle/gradle/blob/HEAD/subprojects/plugins/src/main/resources/org/gradle/api/internal/plugins/unixStartScript.txt
+#   within the Gradle project.
 #
-#       You can find Gradle at https://github.com/gradle/gradle/.
+#   You can find Gradle at https://github.com/gradle/gradle/.
 #
 ##############################################################################
 
@@ -84,7 +84,7 @@ done
 # shellcheck disable=SC2034
 APP_BASE_NAME=${0##*/}
 # Discard cd standard output in case $CDPATH is set (https://github.com/gradle/gradle/issues/25036)
-APP_HOME=$( cd "${APP_HOME:-./}.." > /dev/null && pwd -P ) || exit
+APP_HOME=$( cd "${APP_HOME:-./}" > /dev/null && pwd -P ) || exit
 
 # Use the maximum available, or set MAX_FD != -1 to use that value.
 MAX_FD=maximum
@@ -112,7 +112,7 @@ case "$( uname )" in                #(
   NONSTOP* )        nonstop=true ;;
 esac
 
-CLASSPATH=$APP_HOME/lib/gradle-launcher-8.5.jar
+CLASSPATH=$APP_HOME/gradle/wrapper/gradle-wrapper.jar
 
 
 # Determine the Java command to use to start the JVM.
@@ -211,7 +211,7 @@ DEFAULT_JVM_OPTS='"-Xmx64m" "-Xms64m"'
 set -- \
         "-Dorg.gradle.appname=$APP_BASE_NAME" \
         -classpath "$CLASSPATH" \
-        org.gradle.launcher.GradleMain \
+        org.gradle.wrapper.GradleWrapperMain \
         "$@"
 
 # Stop when "xargs" is not available.
@@ -237,7 +237,6 @@ fi
 #
 # This will of course break if any of these variables contains a newline or
 # an unmatched quote.
-#
 
 eval "set -- $(
         printf '%s\n' "$DEFAULT_JVM_OPTS $JAVA_OPTS $GRADLE_OPTS" |
