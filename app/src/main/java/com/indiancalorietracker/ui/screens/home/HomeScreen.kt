@@ -75,8 +75,11 @@ fun HomeScreen(
                 fontWeight = FontWeight.Bold
             )
             Spacer(modifier = Modifier.height(8.dp))
+            val dateText = remember {
+                SimpleDateFormat("EEEE, MMMM d", Locale.getDefault()).format(Date())
+            }
             Text(
-                text = SimpleDateFormat("EEEE, MMMM d", Locale.getDefault()).format(Date()),
+                text = dateText,
                 style = MaterialTheme.typography.bodyLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

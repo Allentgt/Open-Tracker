@@ -8,6 +8,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -36,25 +37,25 @@ class SearchViewModel @Inject constructor(
         viewModelScope.launch {
             foodRepository.getAllFoodItems().collect { foods ->
                 val categories = foods.map { it.category }.distinct().sorted()
-                _uiState.value = _uiState.value.copy(allCategories = categories)
+                _uiState.update { it.copy(allCategories = categories) }
             }
         }
     }
 
     private fun loadAllFoods() {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true)
+            _uiState.update { it.copy(isLoading = true) }
             foodRepository.getAllFoodItems().collect { foods ->
-                _uiState.value = _uiState.value.copy(
+                _uiState.update { it.copy(
                     searchResults = foods,
                     isLoading = false
-                )
+                ) }
             }
         }
     }
 
     fun onSearchQueryChange(query: String) {
-        _uiState.value = _uiState.value.copy(query = query)
+        _uiState.update { it.copy(query = query) }
         if (query.isBlank()) {
             loadAllFoods()
         } else {
@@ -64,18 +65,18 @@ class SearchViewModel @Inject constructor(
 
     private fun searchFoods(query: String) {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true)
+            _uiState.update { it.copy(isLoading = true) }
             foodRepository.searchFoodItems(query).collect { foods ->
-                _uiState.value = _uiState.value.copy(
+                _uiState.update { it.copy(
                     searchResults = foods,
                     isLoading = false
-                )
+                ) }
             }
         }
     }
 
     fun onCategorySelected(category: String?) {
-        _uiState.value = _uiState.value.copy(selectedCategory = category)
+        _uiState.update { it.copy(selectedCategory = category) }
         if (category == null) {
             loadAllFoods()
         } else {
@@ -85,12 +86,12 @@ class SearchViewModel @Inject constructor(
 
     private fun filterByCategory(category: String) {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isLoading = true)
+            _uiState.update { it.copy(isLoading = true) }
             foodRepository.getFoodItemsByCategory(category).collect { foods ->
-                _uiState.value = _uiState.value.copy(
+                _uiState.update { it.copy(
                     searchResults = foods,
                     isLoading = false
-                )
+                ) }
             }
         }
     }

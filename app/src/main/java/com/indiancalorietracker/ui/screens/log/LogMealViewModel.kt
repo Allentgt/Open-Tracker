@@ -11,6 +11,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.util.Calendar
 import javax.inject.Inject
@@ -36,40 +37,40 @@ class LogMealViewModel @Inject constructor(
     val uiState: StateFlow<LogMealUiState> = _uiState.asStateFlow()
 
     fun onSearchQueryChange(query: String) {
-        _uiState.value = _uiState.value.copy(searchQuery = query)
+        _uiState.update { it.copy(searchQuery = query) }
         if (query.length >= 2) {
             searchFoods(query)
         } else {
-            _uiState.value = _uiState.value.copy(searchResults = emptyList())
+            _uiState.update { it.copy(searchResults = emptyList()) }
         }
     }
 
     private fun searchFoods(query: String) {
         viewModelScope.launch {
-            _uiState.value = _uiState.value.copy(isSearching = true)
+            _uiState.update { it.copy(isSearching = true) }
             foodRepository.searchFoodItems(query).collect { foods ->
-                _uiState.value = _uiState.value.copy(
+                _uiState.update { it.copy(
                     searchResults = foods,
                     isSearching = false
-                )
+                ) }
             }
         }
     }
 
     fun onFoodSelected(food: FoodItem) {
-        _uiState.value = _uiState.value.copy(
+        _uiState.update { it.copy(
             selectedFood = food,
             searchResults = emptyList(),
             searchQuery = ""
-        )
+        ) }
     }
 
     fun onMealTypeSelected(mealType: MealType) {
-        _uiState.value = _uiState.value.copy(selectedMealType = mealType)
+        _uiState.update { it.copy(selectedMealType = mealType) }
     }
 
     fun onServingsChange(servings: Float) {
-        _uiState.value = _uiState.value.copy(servings = servings.coerceAtLeast(0.5f))
+        _uiState.update { it.copy(servings = servings.coerceAtLeast(0.5f)) }
     }
 
     fun saveMeal() {
@@ -87,28 +88,28 @@ class LogMealViewModel @Inject constructor(
                     totalCalories = (food.caloriesPerServing * state.servings).toInt()
                 )
                 mealRepository.logMeal(mealLog)
-                _uiState.value = LogMealUiState(isSaved = true)
+                _uiState.update { LogMealUiState(isSaved = true) }
             } catch (e: Exception) {
-                _uiState.value = _uiState.value.copy(errorMessage = e.message)
+                _uiState.update { it.copy(errorMessage = e.message) }
             }
         }
     }
 
     fun resetState() {
-        _uiState.value = LogMealUiState()
+        _uiState.update { LogMealUiState() }
     }
 
     fun clearSelection() {
-        _uiState.value = _uiState.value.copy(selectedFood = null, servings = 1f)
+        _uiState.update { it.copy(selectedFood = null, servings = 1f) }
     }
 
     private fun getStartOfDay(timestamp: Long): Long {
-        val calendar = Calendar.getInstance()
-        calendar.timeInMillis = timestamp
-        calendar.set(Calendar.HOUR_OF_DAY, 0)
-        calendar.set(Calendar.MINUTE, 0)
-        calendar.set(Calendar.SECOND, 0)
-        calendar.set(Calendar.MILLISECOND, 0)
-        return calendar.timeInMillis
+        return Calendar.getInstance().apply {
+            timeInMillis = timestamp
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.timeInMillis
     }
 }

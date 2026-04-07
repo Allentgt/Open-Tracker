@@ -1,6 +1,9 @@
 package com.indiancalorietracker.di
 
 import android.content.Context
+import androidx.room.Room
+import androidx.room.RoomDatabase
+import androidx.sqlite.db.SupportSQLiteDatabase
 import com.indiancalorietracker.data.local.dao.ExerciseDao
 import com.indiancalorietracker.data.local.dao.FoodItemDao
 import com.indiancalorietracker.data.local.dao.MealLogDao
@@ -13,6 +16,9 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import javax.inject.Singleton
 
 @Module
@@ -22,7 +28,19 @@ object DatabaseModule {
     @Provides
     @Singleton
     fun provideDatabase(@ApplicationContext context: Context): CalorieDatabase {
-        return CalorieDatabase.getDatabase(context)
+        return Room.databaseBuilder(
+            context.applicationContext,
+            CalorieDatabase::class.java,
+            CalorieDatabase.DATABASE_NAME
+        )
+            .addCallback(object : RoomDatabase.Callback() {
+                override fun onCreate(db: SupportSQLiteDatabase) {
+                    super.onCreate(db)
+                    // Data seeding is handled by repositories on first access
+                }
+            })
+            .fallbackToDestructiveMigration()
+            .build()
     }
 
     @Provides

@@ -8,6 +8,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -38,16 +39,24 @@ class WaterViewModel @Inject constructor(
     private fun loadTodayWater() {
         val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
         viewModelScope.launch {
-            waterRepository.getWaterIntakeForDate(today).collect { intake ->
-                val currentMl = intake?.totalMl ?: 0
-                val goalMl = intake?.goalMl ?: 2000
-                _uiState.value = _uiState.value.copy(
-                    todayIntake = intake,
-                    currentMl = currentMl,
-                    goalMl = goalMl,
-                    progress = (currentMl.toFloat() / goalMl).coerceAtMost(1f),
-                    isLoading = false
-                )
+            try {
+                waterRepository.getWaterIntakeForDate(today).collect { intake ->
+                    val currentMl = intake?.totalMl ?: 0
+                    val goalMl = intake?.goalMl ?: 2000
+                    _uiState.update { it.copy(
+                        todayIntake = intake,
+                        currentMl = currentMl,
+                        goalMl = goalMl,
+                        progress = (currentMl.toFloat() / goalMl).coerceAtMost(1f),
+                        isLoading = false,
+                        error = null
+                    ) }
+                }
+            } catch (e: Exception) {
+                _uiState.update { it.copy(
+                    isLoading = false,
+                    error = e.message ?: "Failed to load water data"
+                ) }
             }
         }
     }

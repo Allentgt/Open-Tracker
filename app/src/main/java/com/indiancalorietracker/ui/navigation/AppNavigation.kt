@@ -65,6 +65,8 @@ val bottomNavItems = listOf(
     Screen.Home,
     Screen.Search,
     Screen.Log,
+    Screen.AIChat,
+    Screen.Water,
     Screen.History,
     Screen.Settings
 )

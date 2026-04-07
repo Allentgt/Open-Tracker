@@ -8,10 +8,14 @@ import com.indiancalorietracker.domain.model.MealType
 import com.indiancalorietracker.domain.repository.MealRepository
 import com.indiancalorietracker.domain.repository.UserSettingsRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.util.Calendar
 import javax.inject.Inject
@@ -29,6 +33,9 @@ class HomeViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
+
+    private val _events = MutableSharedFlow<HomeEvent>()
+    val events: SharedFlow<HomeEvent> = _events.asSharedFlow()
 
     init {
         loadTodayData()
@@ -53,7 +60,7 @@ class HomeViewModel @Inject constructor(
                     isLoading = false
                 )
             }.collect { state ->
-                _uiState.value = state
+                _uiState.update { state }
             }
         }
     }
@@ -64,7 +71,12 @@ class HomeViewModel @Inject constructor(
 
     fun deleteMeal(mealId: Long) {
         viewModelScope.launch {
-            mealRepository.deleteMealLog(mealId)
+            try {
+                mealRepository.deleteMealLog(mealId)
+                _events.emit(HomeEvent.MealDeleted)
+            } catch (e: Exception) {
+                _events.emit(HomeEvent.Error(e.message ?: "Failed to delete meal"))
+            }
         }
     }
 

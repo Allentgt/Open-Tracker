@@ -8,8 +8,10 @@ import com.auth0.android.authentication.AuthenticationException
 import com.auth0.android.callback.Callback
 import com.auth0.android.provider.WebAuthProvider
 import com.auth0.android.result.Credentials
-import com.auth0.android.result.UserProfile
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import java.util.Date
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -29,6 +31,13 @@ class Auth0Service @Inject constructor(
         context.getSharedPreferences("auth0_prefs", Context.MODE_PRIVATE)
     }
 
+    // Proper state management with StateFlow
+    private val _currentCredentials = MutableStateFlow<Credentials?>(null)
+    val currentCredentials: StateFlow<Credentials?> = _currentCredentials.asStateFlow()
+
+    private val _currentUserProfile = MutableStateFlow<AppUserProfile?>(null)
+    val currentUserProfile: StateFlow<AppUserProfile?> = _currentUserProfile.asStateFlow()
+
     // Initialize credentials from storage on creation
     init {
         loadCredentialsFromStorage()
@@ -41,7 +50,7 @@ class Auth0Service @Inject constructor(
         val refreshToken = prefs.getString("refresh_token", null)
         
         if (token != null && expiresAtMillis > System.currentTimeMillis()) {
-            currentCredentials = Credentials(
+            _currentCredentials.value = Credentials(
                 accessToken = token,
                 idToken = idToken ?: "",
                 refreshToken = refreshToken,
@@ -72,7 +81,7 @@ class Auth0Service @Inject constructor(
             email?.let { putString("user_email", it) }
             apply()
         }
-        currentUserProfile = AppUserProfile(name = name, email = email)
+        _currentUserProfile.value = AppUserProfile(name = name, email = email)
     }
 
     private fun loadUserNameFromStorage(): AppUserProfile? {
@@ -91,7 +100,7 @@ class Auth0Service @Inject constructor(
                 }
 
                 override fun onSuccess(credentials: Credentials) {
-                    currentCredentials = credentials
+                    _currentCredentials.value = credentials
                     saveCredentialsToStorage(credentials)
                     
                     // Try to decode ID token to get user info
@@ -134,8 +143,8 @@ class Auth0Service @Inject constructor(
                 }
 
                 override fun onSuccess(payload: Void?) {
-                    currentCredentials = null
-                    currentUserProfile = null
+                    _currentCredentials.value = null
+                    _currentUserProfile.value = null
                     clearCredentialsFromStorage()
                     // Clear user name
                     prefs.edit().remove("user_name").remove("user_email").apply()
@@ -145,25 +154,19 @@ class Auth0Service @Inject constructor(
     }
 
     fun isAuthenticated(): Boolean {
-        return currentCredentials != null && 
-               currentCredentials?.expiresAt?.time?.let { it > System.currentTimeMillis() } == true
+        return _currentCredentials.value != null && 
+               _currentCredentials.value?.expiresAt?.time?.let { it > System.currentTimeMillis() } == true
     }
 
     fun getCurrentUser(): AppUserProfile? {
         if (!isAuthenticated()) return null
-        return currentUserProfile ?: loadUserNameFromStorage()
+        return _currentUserProfile.value ?: loadUserNameFromStorage()
     }
 
     // Call this when app resumes to check if user just logged in
     fun refreshAuthState() {
         loadCredentialsFromStorage()
-        currentUserProfile = loadUserNameFromStorage()
-    }
-
-    companion object {
-        @Volatile
-        var currentCredentials: Credentials? = null
-        var currentUserProfile: AppUserProfile? = null
+        _currentUserProfile.value = loadUserNameFromStorage()
     }
 }
 
