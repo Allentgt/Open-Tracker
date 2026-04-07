@@ -39,17 +39,11 @@ jobs:
           AUTH0_DOMAIN: ${{ secrets.AUTH0_DOMAIN }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 
-      - name: Get commit info
-        id: info
-        run: |
-          echo "SHA=${{ github.sha }}" >> $GITHUB_OUTPUT
-          echo "SHA_SHORT=${{ github.sha }}" | cut -c1-7 >> $GITHUB_OUTPUT
-
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: build-${{ steps.info.outputs.SHA_SHORT }}
-          name: Release ${{ steps.info.outputs.SHA_SHORT }}
+          tag_name: build-${{ github.sha }}
+          name: Release ${{ github.sha }}
           draft: false
           prerelease: false
           generate_release_notes: true
