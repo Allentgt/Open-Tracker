@@ -39,8 +39,21 @@ jobs:
           AUTH0_DOMAIN: ${{ secrets.AUTH0_DOMAIN }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
+      - name: Get commit info
+        id: info
+        run: |
+          echo "SHA=${{ github.sha }}" >> $GITHUB_OUTPUT
+          echo "SHA_SHORT=${{ github.sha }}" | cut -c1-7 >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
         with:
-          name: app-release.apk
-          path: app/build/outputs/apk/release/app-release.apk
+          tag_name: build-${{ steps.info.outputs.SHA_SHORT }}
+          name: Release ${{ steps.info.outputs.SHA_SHORT }}
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+          files: |
+            app/build/outputs/apk/release/app-release.apk
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
