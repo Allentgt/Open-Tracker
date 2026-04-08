@@ -4,9 +4,12 @@ import androidx.lifecycle.ViewModel
 import com.indiancalorietracker.service.AppUserProfile
 import com.indiancalorietracker.service.Auth0Service
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class AuthState(
@@ -26,7 +29,28 @@ class AuthViewModel @Inject constructor(
     val authState: StateFlow<AuthState> = _authState.asStateFlow()
 
     init {
+        // Observe Auth0Service's StateFlows for reactive updates
+        observeAuthState()
         checkCurrentUser()
+    }
+
+    private fun observeAuthState() {
+        // Combine credentials and user profile observations
+        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main).launch {
+            auth0Service.currentCredentials.collect { credentials ->
+                val isAuthenticated = credentials != null && 
+                    credentials.expiresAt?.time?.let { it > System.currentTimeMillis() } == true
+                _authState.value = _authState.value.copy(isAuthenticated = isAuthenticated)
+            }
+        }
+        kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main).launch {
+            auth0Service.currentUserProfile.collect { profile ->
+                _authState.value = _authState.value.copy(
+                    userName = profile?.name ?: profile?.email,
+                    userEmail = profile?.email
+                )
+            }
+        }
     }
 
     private fun checkCurrentUser() {

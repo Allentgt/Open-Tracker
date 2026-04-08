@@ -1,16 +1,27 @@
 package com.indiancalorietracker.data.repository
 
+import android.util.Log
 import com.google.ai.client.generativeai.GenerativeModel
 import com.indiancalorietracker.domain.repository.AIAssistantRepository
 import com.indiancalorietracker.BuildConfig
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.flowOn
 import javax.inject.Inject
 
 class AIAssistantRepositoryImpl @Inject constructor() : AIAssistantRepository {
 
+    companion object {
+        private const val TAG = "AIAssistantRepository"
+    }
+
     private val apiKey: String by lazy {
         BuildConfig.GEMINI_API_KEY
+    }
+
+    init {
+        Log.d(TAG, "Initializing AI Assistant with API key: ${if (apiKey.isNotEmpty()) "present (${apiKey.length} chars)" else "EMPTY"}")
     }
 
     private val fitnessSystemPrompt = """
@@ -37,6 +48,7 @@ Remember to be helpful, accurate, and motivating!
     """.trimIndent()
 
     private val generativeModel: GenerativeModel by lazy {
+        Log.d(TAG, "Creating GenerativeModel with key prefix: ${apiKey.take(10)}...")
         GenerativeModel(
             modelName = "gemini-2.0-flash",
             apiKey = apiKey
@@ -45,12 +57,18 @@ Remember to be helpful, accurate, and motivating!
 
     override fun sendMessage(userMessage: String, context: Map<String, Any>): Flow<String> = flow {
         try {
+            Log.d(TAG, "Sending message to AI: $userMessage")
+            
             val contextInfo = buildContextString(context)
             val fullPrompt = "$fitnessSystemPrompt\n\n$contextInfo\n\nUser: $userMessage\n\nAssistant:"
             
             val response = generativeModel.generateContent(fullPrompt)
-            emit(response.text ?: "I'm sorry, I couldn't generate a response. Please try again.")
+            val responseText = response.text
+            
+            Log.d(TAG, "AI Response received: ${responseText?.take(100)}...")
+            emit(responseText ?: "I'm sorry, I couldn't generate a response. Please try again.")
         } catch (e: Exception) {
+            Log.e(TAG, "AI API Error: ${e.message}", e)
             val fallbackResponse = when {
                 userMessage.contains("workout", ignoreCase = true) -> 
                     "I'd be happy to help with your workout! To give you the best advice, please tell me:\n• Your fitness level (beginner, intermediate, advanced)\n• What equipment you have available\n• Your specific goals (strength, weight loss, muscle gain)"
@@ -63,7 +81,7 @@ Remember to be helpful, accurate, and motivating!
             }
             emit(fallbackResponse)
         }
-    }
+    }.flowOn(Dispatchers.IO)
 
     private fun buildContextString(context: Map<String, Any>): String {
         if (context.isEmpty()) return ""

@@ -59,6 +59,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.getByName("debug")
         }
         debug {
             buildConfigField("String", "AUTH0_CLIENT_ID", "\"${getProperty("AUTH0_CLIENT_ID", "")}\"")

@@ -41,6 +41,12 @@ class Auth0Service @Inject constructor(
     // Initialize credentials from storage on creation
     init {
         loadCredentialsFromStorage()
+        loadUserProfileFromStorage()
+    }
+
+    private fun loadUserProfileFromStorage() {
+        val profile = loadUserNameFromStorage()
+        _currentUserProfile.value = profile
     }
 
     private fun loadCredentialsFromStorage() {
